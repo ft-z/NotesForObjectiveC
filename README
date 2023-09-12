@@ -1,0 +1,23 @@
+**Error Domain=PHPhotosErrorDomain Code=3300 ocurred in the process of saving my AVCapturePhoto data to PHPhotoLibrary
+
+solution : 
+```
+[PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
+PHAssetResourceCreationOptions *options = [[PHAssetResourceCreationOptions alloc] init];
+
+// self.rawFileURL is your custom URL, you'd better to use "[yourFileDirectoryAndFileName URLByAppendingPathExtension:@"DNG"];" to express format
+[request addResourceWithType:PHAssetResourceTypeAlternatePhoto fileURL:self.rawFileURL options:options];
+
+// self.compressedFileURL is your custom URL, you can choose some compress format to save. It's optional, but if you invoke "AVCapturePhotoSettings photoSettingsWithRawPixelFormatType:processedFormat:",you must pass parameter "processedFormat" but not need to invoke addResourceWithType:fileURL:options: as below:
+if (self.compressedFileURL) {
+    [request addResourceWithType:PHAssetResourceTypePhoto fileURL:self.compressedFileURL options:nil];
+}
+
+```
+ cause of the problem:
+I set PHAssetResourceTypePhoto for RAW data, but PHAssetResourceType document discribes raw file use PHAssetResourceTypeAlternatePhoto. That's the cause.
+
+
+And if you only want to save RAW file, you alse need to invoke "AVCapturePhotoSettings photoSettingsWithRawPixelFormatType:processedFormat:",you must pass parameter "processedFormat",but not need to invoke addResourceWithType:fileURL:options: to add compress format to photo library.
+You should also notice that PHAssetCreationRequest and PHAssetResourceCreationOptions objects must new once, if you alloc and init more than once, it will cause problem.
